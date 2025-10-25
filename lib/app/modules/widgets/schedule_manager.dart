@@ -142,7 +142,7 @@ class _ScheduleManagerState extends State<ScheduleManager> {
                       Icon(Icons.calendar_today, color: Colors.indigo[600], size: 24),
                       const SizedBox(width: 8),
                       const Text(
-                        'Jadwal Pelajaran',
+                        'Jadwal Pelajarann',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
