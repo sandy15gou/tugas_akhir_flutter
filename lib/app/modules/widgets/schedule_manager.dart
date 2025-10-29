@@ -6,11 +6,13 @@ import '../../data/services/database_service.dart';
 class ScheduleManager extends StatefulWidget {
   final ClassRoom classroom;
   final VoidCallback onUpdate;
+  final bool canEdit;
 
   const ScheduleManager({
     Key? key,
     required this.classroom,
     required this.onUpdate,
+    this.canEdit = true,
   }) : super(key: key);
 
   @override
@@ -126,30 +128,29 @@ class _ScheduleManagerState extends State<ScheduleManager> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: Colors.indigo[600], size: 24),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Jadwal Pelajarann',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, color: Colors.indigo[600], size: 24),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Jadwal Pelajaran',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+                if (widget.canEdit)
                   ElevatedButton.icon(
                     onPressed: () => setState(() => isAdding = !isAdding),
                     icon: const Icon(Icons.add),
@@ -159,36 +160,52 @@ class _ScheduleManagerState extends State<ScheduleManager> {
                       foregroundColor: Colors.white,
                     ),
                   ),
-                ],
-              ),
-              if (isAdding) ...[
-                const SizedBox(height: 16),
-                _buildScheduleForm(),
               ],
+            ),
+            if (isAdding && widget.canEdit) ...[
               const SizedBox(height: 16),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 400),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: widget.classroom.schedules.length,
-                  itemBuilder: (context, index) {
-                    final schedule = widget.classroom.schedules[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      color: Colors.indigo[50],
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: editingId == schedule.id
-                            ? _buildScheduleForm(schedule: schedule)
-                            : _buildScheduleItem(schedule),
+              _buildScheduleForm(),
+            ],
+            const SizedBox(height: 16),
+            widget.classroom.schedules.isEmpty
+                ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    Icon(Icons.calendar_today_outlined,
+                        size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Belum ada jadwal',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            )
+                : ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: widget.classroom.schedules.length,
+              itemBuilder: (context, index) {
+                final schedule = widget.classroom.schedules[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  color: Colors.indigo[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: editingId == schedule.id && widget.canEdit
+                        ? _buildScheduleForm(schedule: schedule)
+                        : _buildScheduleItem(schedule),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -201,125 +218,117 @@ class _ScheduleManagerState extends State<ScheduleManager> {
         color: Colors.indigo[50],
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              value: selectedDay,
-              decoration: const InputDecoration(
-                labelText: 'Hari',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: days
-                  .map((day) => DropdownMenuItem(
-                        value: day,
-                        child: Text(day),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => selectedDay = value);
-                }
-              },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<String>(
+            value: selectedDay,
+            decoration: const InputDecoration(
+              labelText: 'Hari',
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: formSubjectController,
-              decoration: const InputDecoration(
-                labelText: 'Mata Pelajaran',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
+            items: days
+                .map((day) => DropdownMenuItem(
+              value: day,
+              child: Text(day),
+            ))
+                .toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => selectedDay = value);
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: formSubjectController,
+            decoration: const InputDecoration(
+              labelText: 'Mata Pelajaran',
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: formTeacherController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Guru',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: formTeacherController,
+            decoration: const InputDecoration(
+              labelText: 'Nama Guru',
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: formStartTimeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Waktu Mulai',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    readOnly: true,
-                    onTap: () async {
-                      final time = await _selectTime(context);
-                      if (time != null) {
-                        setState(() {
-                          formStartTimeController.text =
-                              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-                        });
-                      }
-                    },
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: formStartTimeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Waktu Mulai',
+                    border: OutlineInputBorder(),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: formEndTimeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Waktu Selesai',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    readOnly: true,
-                    onTap: () async {
-                      final time = await _selectTime(context);
-                      if (time != null) {
-                        setState(() {
-                          formEndTimeController.text =
-                              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: schedule == null ? handleAdd : () => handleEdit(schedule),
-                  icon: const Icon(Icons.save),
-                  label: const Text('Simpan'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      if (schedule != null) {
-                        editingId = null;
-                      } else {
-                        isAdding = false;
-                      }
-                      _clearForm();
-                    });
+                  readOnly: true,
+                  onTap: () async {
+                    final time = await _selectTime(context);
+                    if (time != null) {
+                      setState(() {
+                        formStartTimeController.text =
+                        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                      });
+                    }
                   },
-                  icon: const Icon(Icons.close),
-                  label: const Text('Batal'),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: formEndTimeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Waktu Selesai',
+                    border: OutlineInputBorder(),
+                  ),
+                  readOnly: true,
+                  onTap: () async {
+                    final time = await _selectTime(context);
+                    if (time != null) {
+                      setState(() {
+                        formEndTimeController.text =
+                        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: schedule == null ? handleAdd : () => handleEdit(schedule),
+                icon: const Icon(Icons.save),
+                label: const Text('Simpan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    if (schedule != null) {
+                      editingId = null;
+                    } else {
+                      isAdding = false;
+                    }
+                    _clearForm();
+                  });
+                },
+                icon: const Icon(Icons.close),
+                label: const Text('Batal'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -369,6 +378,7 @@ class _ScheduleManagerState extends State<ScheduleManager> {
           ),
         ),
         Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Row(
               children: [
@@ -383,29 +393,30 @@ class _ScheduleManagerState extends State<ScheduleManager> {
                 ),
               ],
             ),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  color: Colors.blue,
-                  onPressed: () {
-                    setState(() {
-                      editingId = schedule.id;
-                      selectedDay = schedule.day;
-                      formSubjectController.text = schedule.subject;
-                      formTeacherController.text = schedule.teacher;
-                      formStartTimeController.text = schedule.startTime;
-                      formEndTimeController.text = schedule.endTime;
-                    });
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, size: 20),
-                  color: Colors.red,
-                  onPressed: () => handleDelete(schedule.id),
-                ),
-              ],
-            ),
+            if (widget.canEdit)
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    color: Colors.blue,
+                    onPressed: () {
+                      setState(() {
+                        editingId = schedule.id;
+                        selectedDay = schedule.day;
+                        formSubjectController.text = schedule.subject;
+                        formTeacherController.text = schedule.teacher;
+                        formStartTimeController.text = schedule.startTime;
+                        formEndTimeController.text = schedule.endTime;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 20),
+                    color: Colors.red,
+                    onPressed: () => handleDelete(schedule.id),
+                  ),
+                ],
+              ),
           ],
         ),
       ],

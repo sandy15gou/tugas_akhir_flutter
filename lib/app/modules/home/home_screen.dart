@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Text(
-                'SMP Negeri 1 Jakarta',
+                'SMPN 1 Kota Jambi',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 14,

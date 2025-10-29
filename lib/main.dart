@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'app/modules/home/home_screen.dart';
+import 'package:get/get.dart';
 import 'app/data/services/database_service.dart';
+import 'app/data/services/auth_service.dart';
+import 'app/routes/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize services
+  await DatabaseService.init();
+  await DatabaseService.initializeDefaultData();
+
+  // Initialize AuthService
+  Get.put(AuthService());
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -13,7 +22,6 @@ void main() async {
     ),
   );
 
-  await DatabaseService.init();
   runApp(const MyApp());
 }
 
@@ -22,39 +30,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kelas App',
+    return GetMaterialApp(
+      title: 'SMPN 1 Kota Jambi',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-          brightness: Brightness.light,
-        ),
+
+        colorSchemeSeed: const Color(0xFF1E3C72),
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.grey[50],
         appBarTheme: const AppBarThemeData(
-          backgroundColor: Colors.indigo,
+          backgroundColor: Color(0xFF1E3C72),
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
           systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
-        tabBarTheme: const TabBarThemeData(
-          indicatorSize: TabBarIndicatorSize.tab,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(color: Colors.white, width: 2),
-          ),
-        ),
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
-      home: const HomeScreen(),
+      initialRoute: AppPages.INITIAL,
+      getPages: AppPages.routes,
     );
   }
 }

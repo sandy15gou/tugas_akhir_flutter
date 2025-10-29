@@ -6,11 +6,13 @@ import '../../data/services/database_service.dart';
 class StudentManager extends StatefulWidget {
   final ClassRoom classroom;
   final VoidCallback onUpdate;
+  final bool canEdit;
 
   const StudentManager({
     Key? key,
     required this.classroom,
     required this.onUpdate,
+    this.canEdit = true,
   }) : super(key: key);
 
   @override
@@ -119,18 +121,19 @@ class _StudentManagerState extends State<StudentManager> {
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => setState(() => isAdding = !isAdding),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Tambah Siswa'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white,
+                if (widget.canEdit)
+                  ElevatedButton.icon(
+                    onPressed: () => setState(() => isAdding = !isAdding),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Tambah Siswa'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
-                ),
               ],
             ),
-            if (isAdding) ...[
+            if (isAdding && widget.canEdit) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -180,7 +183,27 @@ class _StudentManagerState extends State<StudentManager> {
               ),
             ],
             const SizedBox(height: 16),
-            ListView.builder(
+            widget.classroom.students.isEmpty
+                ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    Icon(Icons.people_outline,
+                        size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Belum ada siswa',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+                : ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: widget.classroom.students.length,
@@ -191,7 +214,7 @@ class _StudentManagerState extends State<StudentManager> {
                   color: Colors.purple[50],
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: editingId == student.id
+                    child: editingId == student.id && widget.canEdit
                         ? _buildEditForm(student)
                         : _buildStudentItem(student, index),
                   ),
@@ -288,22 +311,24 @@ class _StudentManagerState extends State<StudentManager> {
             ],
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.edit),
-          color: Colors.blue,
-          onPressed: () {
-            setState(() {
-              editingId = student.id;
-              formNameController.text = student.name;
-              formNisnController.text = student.nisn;
-            });
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete),
-          color: Colors.red,
-          onPressed: () => handleDelete(student.id),
-        ),
+        if (widget.canEdit) ...[
+          IconButton(
+            icon: const Icon(Icons.edit),
+            color: Colors.blue,
+            onPressed: () {
+              setState(() {
+                editingId = student.id;
+                formNameController.text = student.name;
+                formNisnController.text = student.nisn;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            color: Colors.red,
+            onPressed: () => handleDelete(student.id),
+          ),
+        ],
       ],
     );
   }
